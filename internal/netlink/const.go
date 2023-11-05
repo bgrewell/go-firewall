@@ -1,0 +1,24 @@
+package netlink
+
+const (
+	NFNLGRP_NONE                  = 0
+	NFNLGRP_CONNTRACK_NEW         = 1
+	NFNLGRP_CONNTRACK_UPDATE      = 2
+	NFNLGRP_CONNTRACK_DESTROY     = 4
+	NFNLGRP_CONNTRACK_EXP_NEW     = 8
+	NFNLGRP_CONNTRACK_EXP_UPDATE  = 16
+	NFNLGRP_CONNTRACK_EXP_DESTROY = 32
+	NFNLGRP_NFTABLES              = 64
+	NFNLGRP_ACCT_QUOTA            = 128
+	NFNLGRP_NFTRACE               = 256
+)
+
+const NFNLGRP_MAX = NFNLGRP_NFTRACE - 1
+
+const (
+	// Constants for the Netlink message types
+	NLMSG_NOOP    = 0x1
+	NLMSG_ERROR   = 0x2
+	NLMSG_DONE    = 0x3
+	NLMSG_OVERRUN = 0x4
+)
