@@ -2,16 +2,22 @@ package engines
 
 import (
 	"errors"
+	execute "github.com/BGrewell/go-execute/v2"
 	"github.com/bgrewell/go-firewall/internal/netlink"
+	"github.com/bgrewell/go-firewall/pkg/nftables"
 	"log"
 	"sync"
+	"time"
 )
 
 type DefaultEngine struct {
 	Monitor  netlink.NetlinkWatcher
 	Triggers <-chan []byte
+	Errors   <-chan error
 	Lock     *sync.Mutex
+	exec     execute.Executor
 	running  bool
+	ruleset  *nftables.Ruleset
 }
 
 func (e *DefaultEngine) CreateTable() {
@@ -51,8 +57,23 @@ func (e *DefaultEngine) DeleteRule() {
 
 // Start starts the execution of the rules engine
 func (e *DefaultEngine) Start() error {
+	// Mark as running
 	e.running = true
-	return errors.New("this method has not been implemented")
+
+	// Setup sync triggering
+	var err error
+	e.Triggers, e.Errors, err = e.Monitor.Monitor()
+	if err != nil {
+		return err
+	}
+
+	// Manually trigger once then monitor for triggers
+	err = e.sync()
+	if err != nil {
+		return err
+	}
+	go e.monitorSyncTrigger()
+	return nil
 }
 
 // Stop stops the execution of the rules engine
@@ -61,9 +82,9 @@ func (e *DefaultEngine) Stop() error {
 	return errors.New("this method has not been implemented")
 }
 
-// triggerRuleSync uses a netlink watcher to monitor the netlink messages and trigger a sync of the rules if
+// monitorSyncTrigger uses a netlink watcher to monitor the netlink messages and trigger a sync of the rules if
 // an NFTABLES message is seen
-func (e *DefaultEngine) triggerRuleSync() {
+func (e *DefaultEngine) monitorSyncTrigger() {
 	for e.running {
 		// Wait for a trigger from the watcher
 		<-e.Triggers
@@ -80,5 +101,14 @@ func (e *DefaultEngine) triggerRuleSync() {
 
 // sync synchronizes the internal rule state with the external rule state
 func (e *DefaultEngine) sync() error {
-	return errors.New("this method is not yet implemented")
+	output, err := e.exec.ExecuteWithTimeout("nft -aj list ruleset", 10*time.Second)
+	if err != nil {
+		return err
+	}
+	e.ruleset, err = nftables.UnmarshalNftables(output)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
