@@ -11,13 +11,14 @@ import (
 )
 
 type DefaultEngine struct {
-	Monitor  netlink.NetlinkWatcher
-	Triggers <-chan []byte
-	Errors   <-chan error
-	Lock     *sync.Mutex
-	exec     execute.Executor
-	running  bool
-	ruleset  *nftables.Ruleset
+	Monitor     netlink.NetlinkWatcher
+	Errors      <-chan error
+	Lock        *sync.Mutex
+	exec        execute.Executor
+	running     bool
+	ruleset     *nftables.Ruleset
+	notifyChan  chan<- struct{} // Channel used to update the caller that a nftable change was detected
+	monitorChan <-chan []byte   // Channel returned by the monitor that it triggers nftables changes on
 }
 
 func (e *DefaultEngine) CreateTable() {
@@ -62,7 +63,7 @@ func (e *DefaultEngine) Start() error {
 
 	// Setup sync triggering
 	var err error
-	e.Triggers, e.Errors, err = e.Monitor.Monitor()
+	e.monitorChan, e.Errors, err = e.Monitor.Monitor()
 	if err != nil {
 		return err
 	}
@@ -87,7 +88,7 @@ func (e *DefaultEngine) Stop() error {
 func (e *DefaultEngine) monitorSyncTrigger() {
 	for e.running {
 		// Wait for a trigger from the watcher
-		<-e.Triggers
+		<-e.monitorChan
 
 		// Acquire a lock before we modify the rules state, then sync and finally release the lock
 		e.Lock.Lock()
@@ -95,6 +96,9 @@ func (e *DefaultEngine) monitorSyncTrigger() {
 		e.Lock.Unlock()
 		if err != nil {
 			log.Printf("error syncing rules: %v\n", err)
+		}
+		if e.notifyChan != nil {
+			e.notifyChan <- struct{}{}
 		}
 	}
 }
