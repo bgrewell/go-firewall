@@ -17,7 +17,7 @@ func main() {
 		fmt.Printf("Error: %v\n", err)
 	}
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(100 * time.Second)
 
 	err = engine.Stop()
 	if err != nil {
