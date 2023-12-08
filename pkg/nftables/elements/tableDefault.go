@@ -1,4 +1,4 @@
-package nftables
+package elements
 
 import "github.com/bgrewell/go-firewall/pkg/nftables/consts"
 

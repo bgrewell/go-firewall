@@ -5,6 +5,7 @@ import (
 	execute "github.com/BGrewell/go-execute/v2"
 	"github.com/bgrewell/go-firewall/internal/netlink"
 	"github.com/bgrewell/go-firewall/pkg/nftables"
+	"github.com/bgrewell/go-firewall/pkg/nftables/elements"
 	"log"
 	"sync"
 	"time"
@@ -16,7 +17,7 @@ type DefaultEngine struct {
 	Lock        *sync.Mutex
 	exec        execute.Executor
 	running     bool
-	ruleset     *nftables.Ruleset
+	ruleset     *elements.Ruleset
 	notifyChan  chan<- struct{} // Channel used to update the caller that a nftable change was detected
 	monitorChan <-chan []byte   // Channel returned by the monitor that it triggers nftables changes on
 }

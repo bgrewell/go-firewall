@@ -1,8 +1,9 @@
-package nftables
+package elements
 
 import "encoding/json"
 
 type Chain interface {
+	Rename(newname string)
 	//// AddRule adds the specified rule at the end of the chain
 	//AddRule(rule *Rule) error
 	//// InsertRule adds the specified rule at the beginning of the chain or before the specified rule

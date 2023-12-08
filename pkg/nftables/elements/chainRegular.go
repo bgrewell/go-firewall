@@ -1,6 +1,8 @@
-package nftables
+package elements
 
-import "github.com/bgrewell/go-firewall/pkg/nftables/consts"
+import (
+	"github.com/bgrewell/go-firewall/pkg/nftables/consts"
+)
 
 type RegularChain struct {
 	Family consts.AddressFamily `json:"family"`
